@@ -1,7 +1,11 @@
 NAME	= fdf
 
 # src / obj files
-SRC		= main.c
+SRC		= main.c \
+		  draw.c \
+		  fdf_cal_matrice.c \
+		  fdf_matrice.c \
+		  fdf_hooks.c
 
 OBJ		= $(addprefix $(OBJDIR),$(SRC:.c=.o))
 

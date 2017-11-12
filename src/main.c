@@ -1,10 +1,4 @@
-
-#include <stdlib.h>
-#include <fcntl.h>
-#include "../includes/libft.h"
 #include "fdf.h"
-#include "mlx.h"
-
 
 void	print_error(char *msg)
 {
@@ -74,12 +68,14 @@ int	parse_line(char *line, int nb_lines, t_point ***points)
 		if (!((*points) = (t_point**)malloc(sizeof(t_point) * i)))
 			print_error("points malloc error");
 	i = 0;
-	while(points_array[i])
+	while(points_array[i] != 0)
 	{
 		point = (t_point*)malloc(sizeof(t_point));
-		point->x = i;
-		point->y = nb_lines;
+		point->x = i * SIZE_W;
+		point->y = nb_lines * SIZE_H;
 		point->val = parse_point(points_array[i]);
+		point->s = 1;
+		point->z_color = point->val;
 		(*points)[i] = point;
 		i++;
 	}
@@ -140,19 +136,40 @@ void	print_map(t_map *map)
 		
 }
 
+
+
+void	adapt_map(t_env *e)
+{
+	int		w;
+	int		h;
+	double	s;
+	w = (WINDOW_SIZE_W + 100) / 2;
+	h = (WINDOW_SIZE_H + 100) / 2;
+	e->center.x == 0 ? e->center.x = 10 : e->center.x;
+	s = (w - 600) / (e->center.x);
+	ft_cal_translat(e, -e->center.x + w, -e->center.y + h, 0);
+	ft_cal_scale(e, s);
+}
+
+int		expose_hook(t_env *e)
+{
+	draw_reload(e);
+	return (0);
+}
+
 int		main(int argc, char **argv)
 {
 	
 	int 	fd;
-	//void	*mlx;
-	//void	*win;
 	int 	i;
 	t_map	*map;
+	t_env 	*env;
 
 	i = 0;
 
-	//mlx = mlx_init();
-	//win = mlx_new_window(mlx, 400, 400, "mlx 42");
+	if (!(env = (t_env*)malloc(sizeof(t_env))))
+			print_error("An error occured during env malloc");
+
 	fd = open(argv[1], O_RDONLY);
 	if(argc !=2)
 	{
@@ -163,9 +180,14 @@ int		main(int argc, char **argv)
 		print_error("An error occured during opening of the file");
 
 	map = parse_map(fd, argv);
-	print_map(map);
-	//mlx_pixel_put(mlx, win, 200, 200, 0x00FFFFFF);
-	//mlx_loop(mlx);
+	env->map = map;
+	get_center(env);
+	
+	draw_windows("42 FDF", WINDOW_SIZE_W, WINDOW_SIZE_H, env);
+	adapt_map(env);
+	mlx_expose_hook(env->win, expose_hook, env);
+	mlx_hook(env->win, 2, 3, key_hook, env);
+	mlx_loop(env->mlx);
 	
 	return(1);
 }
